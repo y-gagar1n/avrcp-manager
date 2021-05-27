@@ -30,15 +30,24 @@ def properties_changed(interface, changed, invalidated, path):
     print(invalidated)
     print(path)
 
-def pause(bus):
-    proxy = bus.get_object('org.bluez', '/org/bluez/hci0/dev_F8_2D_7C_A1_EF_2F')
-    iface = dbus.Interface(proxy, dbus_interface='org.bluez.MediaControl1')
+def pause(bus, player):
+    proxy = bus.get_object('org.bluez', player)
+    iface = dbus.Interface(proxy, dbus_interface='org.bluez.MediaPlayer1')
     props = iface.Pause()
 
-def play(bus):
-    proxy = bus.get_object('org.bluez', '/org/bluez/hci0/dev_F8_2D_7C_A1_EF_2F')
-    iface = dbus.Interface(proxy, dbus_interface='org.bluez.MediaControl1')
+def play(bus, player):
+    proxy = bus.get_object('org.bluez', player)
+    iface = dbus.Interface(proxy, dbus_interface='org.bluez.MediaPlayer1')
     props = iface.Play()
+
+def list_devices(bus):
+    proxy = bus.get_object('org.bluez', '/')
+    manager = dbus.Interface(proxy, dbus_interface='org.freedesktop.DBus.ObjectManager')
+    objects = manager.GetManagedObjects()
+    for path, interfaces in objects.items():
+        if 'org.bluez.MediaPlayer1' in interfaces.keys():
+            print(str(path))
+            return path
 
 if __name__ == '__main__':
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
@@ -54,7 +63,8 @@ if __name__ == '__main__':
             arg0 = "org.bluez.Device1",
             path_keyword = "path")
 
-    play(bus)
+    player = list_devices(bus)
+    pause(bus, player)
 
     mainloop = GLib.MainLoop()
     mainloop.run()
