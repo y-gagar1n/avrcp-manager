@@ -1,4 +1,5 @@
 import dbus
+import time
 
 # MediaPlayer API: https://github.com/pauloborges/bluez/blob/master/doc/media-api.txt
 
@@ -72,4 +73,6 @@ class AvrcpManager:
         self.send_media_command('Next')
 
     def prev(self):
+        self.send_media_command('Previous')
+        time.sleep(0.1)
         self.send_media_command('Previous')
