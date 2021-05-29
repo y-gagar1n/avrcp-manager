@@ -1,5 +1,6 @@
 import dbus
 import time
+import pdb
 
 # MediaPlayer API: https://github.com/pauloborges/bluez/blob/master/doc/media-api.txt
 
@@ -59,6 +60,17 @@ class AvrcpManager:
         iface = dbus.Interface(proxy, dbus_interface='org.bluez.MediaPlayer1')
         method = getattr(iface, command)
         method()
+
+    def get_media_property(self):
+        proxy = self.bus.get_object('org.bluez', self.player)
+        props_iface = dbus.Interface(proxy, "org.freedesktop.DBus.Properties")
+        player_props = props_iface.GetAll('org.bluez.MediaPlayer1')
+
+        status = player_props.get("Status", "")
+        position = player_props.get("Position", "")
+        track = player_props.get('Track', "")
+        pdb.set_trace()
+        print(track.get('Title', 'unknown'), track.get('Artist', 'unknown'), status, position)
 
     def status(self):
         pass

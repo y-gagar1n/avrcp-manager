@@ -23,6 +23,8 @@ if __name__ == '__main__':
             manager.next()
         elif cmd == 'prev':
             manager.prev()
+        elif cmd == 'status':
+            manager.get_media_property()
         elif cmd == 'exit':
             break
 
