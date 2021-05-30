@@ -1,90 +1,36 @@
+#!/usr/bin/python3
 import dbus
-import time
+import dbus.mainloop.glib
+from gi.repository import GLib
+from avrcp_manager_lib import AvrcpManager
 import pdb
+import threading
 
-# MediaPlayer API: https://github.com/pauloborges/bluez/blob/master/doc/media-api.txt
+
+def handle_input():
+    while True:
+        cmd = str(input('AVRCP# '))
+
+        if cmd == 'pause':
+            manager.pause()
+        elif cmd == 'resume' or cmd == 'play':
+            manager.resume()
+        elif cmd == 'next':
+            manager.next()
+        elif cmd == 'prev':
+            manager.prev()
+        elif cmd == 'status':
+            manager.status()
+        elif cmd == 'exit':
+            break
 
 
-class AvrcpManager:
-    def __init__(self, bus):
-        self.bus = bus
-        self.player = self.list_devices()
+if __name__ == '__main__':
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
-        bus.add_signal_receiver(self.interfaces_added,
-                                dbus_interface="org.freedesktop.DBus.ObjectManager",
-                                signal_name="InterfacesAdded")
+    bus = dbus.SystemBus()
+    manager = AvrcpManager(bus)
+    threading.Thread(target=handle_input).start()
 
-        bus.add_signal_receiver(self.properties_changed,
-                                dbus_interface="org.freedesktop.DBus.Properties",
-                                signal_name="PropertiesChanged",
-                                arg0="org.bluez.Device1",
-                                path_keyword="path")
-
-    def list_devices(self):
-        proxy = self.bus.get_object('org.bluez', '/')
-        manager = dbus.Interface(proxy, dbus_interface='org.freedesktop.DBus.ObjectManager')
-        objects = manager.GetManagedObjects()
-        for path, interfaces in objects.items():
-            if 'org.bluez.MediaPlayer1' in interfaces.keys():
-                print(str(path))
-                return path
-
-    def interfaces_added(self, path, interfaces):
-        print(interfaces.keys())
-        if "org.bluez.MediaPlayer1" not in interfaces:
-            return
-
-        media_player = interfaces["org.bluez.MediaPlayer1"]
-
-        if "Device" not in media_player:
-            return
-
-        device = media_player["Device"]
-
-        print("interfaces_added")
-        print(path)
-        print(str(device))
-
-    def properties_changed(self, interface, changed, invalidated, path):
-        if interface != "org.bluez.Device1":
-            return
-
-        print("properties_changed")
-        print(interface)
-        print(changed)
-        print(invalidated)
-        print(path)
-
-    def send_media_command(self, command):
-        proxy = self.bus.get_object('org.bluez', self.player)
-        iface = dbus.Interface(proxy, dbus_interface='org.bluez.MediaPlayer1')
-        method = getattr(iface, command)
-        method()
-
-    def get_media_property(self):
-        proxy = self.bus.get_object('org.bluez', self.player)
-        props_iface = dbus.Interface(proxy, "org.freedesktop.DBus.Properties")
-        player_props = props_iface.GetAll('org.bluez.MediaPlayer1')
-
-        status = player_props.get("Status", "")
-        position = player_props.get("Position", "")
-        track = player_props.get('Track', "")
-        pdb.set_trace()
-        print(track.get('Title', 'unknown'), track.get('Artist', 'unknown'), status, position)
-
-    def status(self):
-        pass
-
-    def pause(self):
-        self.send_media_command('Pause')
-
-    def resume(self):
-        self.send_media_command('Play')
-
-    def next(self):
-        self.send_media_command('Next')
-
-    def prev(self):
-        self.send_media_command('Previous')
-        time.sleep(0.1)
-        self.send_media_command('Previous')
+    mainloop = GLib.MainLoop()
+    mainloop.run()
