@@ -1,6 +1,5 @@
 import dbus
 import time
-import pdb
 
 # MediaPlayer API: https://github.com/pauloborges/bluez/blob/master/doc/media-api.txt
 
@@ -79,7 +78,6 @@ class AvrcpManager:
         status = player_props.get("Status", "")
         position = player_props.get("Position", "")
         track = player_props.get('Track', "")
-        pdb.set_trace()
         print(track.get('Title', 'unknown'), track.get('Artist', 'unknown'), status, position)
 
     def status(self):
